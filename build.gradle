@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'org.example'
-version '1.1-SNAPSHOT'
+version '1.2'
 
 repositories {
     mavenCentral()
@@ -28,7 +28,8 @@ patchPluginXml {
 test {
     useJUnitPlatform()
 }
+
 publishPlugin {
     channels = ['alpha']
-    token = 'perm:bmF6YXJla2E=.OTItNTIwNw==.i1G7wZneDdQhqEmbrL5Q8PcnBM12Aw'
+    token = TOKEN
 }
