@@ -1,5 +1,6 @@
 package factory
 
+import com.google.common.collect.ImmutableList
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -19,9 +20,6 @@ class FactoryCompletionContributor : CompletionContributor() {
     }
 
     private class FactoryCompletionProvider: CompletionProvider<CompletionParameters>() {
-        var elementsList: ArrayList<LookupElement> = ArrayList()
-        lateinit var typeEvalContext: TypeEvalContext
-        lateinit var modelClass: PyClass
 
         override fun addCompletions(
             parameters: CompletionParameters,
@@ -33,33 +31,28 @@ class FactoryCompletionContributor : CompletionContributor() {
 
             val instanceRef = prevSibling.prevSibling as? PyReferenceExpression ?: return
 
-            val factoryCallExp = PyResolveUtil.fullResolveLocally(instanceRef) ?: return
+            val (project, modelClass) = FactoryUtils.getResolvedData(instanceRef) ?: return
 
-            val factoryRef = factoryCallExp.firstChild as? PyReferenceExpression ?: return
+            val typeEvalContext = TypeEvalContext.codeCompletion(project, modelClass.containingFile)
 
-            val factoryClass = factoryRef.reference.resolve() as? PyClass ?: return
+            val membersList = ImmutableList.of(
+                modelClass.getClassAttributesInherited(typeEvalContext),
+                modelClass.classAttributes,
+                modelClass.instanceAttributes,
+                modelClass.methods.toList()
+            )
 
-            val factoryClassName = factoryClass.name ?: return
-            if (!factoryClassName.endsWith("Factory")) return
-
-            val modelName = factoryClassName.replace("Factory", "")
-            val project = factoryClass.project
-            val modelClass = PyClassNameIndexInsensitive.find(modelName, factoryClass.project).firstOrNull() ?: return
-
-            typeEvalContext = TypeEvalContext.codeCompletion(project, modelClass.containingFile)
-
-            addClassInheritedAttributes()
-            addClassAttributes()
-            addInstanceAttributes()
-            addMethods()
-
+            val elementsList = ArrayList<LookupElement>()
+            for (members in membersList) {
+                addModelClassMembers(members, modelClass, elementsList)
+            }
             result.addAllElements(elementsList)
 
             result.stopHere()
 
         }
 
-        private fun addModelClassRelatedThings(elements: Collection<PsiNamedElement>) {
+        private fun addModelClassMembers(elements: Collection<PsiNamedElement>, modelClass: PyClass, elementsList: ArrayList<LookupElement>) {
             for (element in elements) {
                 val name = element.name ?: continue
                 if (isBuiltinOrBuiltinFunction(name)) continue
@@ -71,26 +64,6 @@ class FactoryCompletionContributor : CompletionContributor() {
                     .withIcon(element.getIcon(0))
                 elementsList.add(lookupElement)
             }
-        }
-
-        private fun addClassInheritedAttributes() {
-            val classAttributesInherited = modelClass.getClassAttributesInherited(typeEvalContext)
-            addModelClassRelatedThings(classAttributesInherited)
-        }
-
-        private fun addClassAttributes() {
-            val classAttributes = modelClass.classAttributes
-            addModelClassRelatedThings(classAttributes)
-        }
-
-        private fun addInstanceAttributes() {
-            val InstanceAttributes = modelClass.instanceAttributes
-            addModelClassRelatedThings(InstanceAttributes)
-        }
-
-        private fun addMethods() {
-            val methods = modelClass.methods.toList()
-            addModelClassRelatedThings(methods)
         }
 
         private fun isBuiltinOrBuiltinFunction(name: String): Boolean {
