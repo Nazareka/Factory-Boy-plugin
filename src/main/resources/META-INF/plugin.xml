@@ -1,0 +1,24 @@
+<idea-plugin>
+    <id>org.example.facto-plugin</id>
+    <name>Factory Boy + Django Support</name>
+    <vendor email="nazareka.dev@gmail.com" url="https://github.com/nazareka">nazareka</vendor>
+
+    <description><![CDATA[
+    Adding support for Factory boy and django packages.
+    Now it's only adding autocomplete for instances created by factories.
+    It will be only works if the name of class of object is equal to name of factory class without suffix(e. g. Job -> JobFactory)
+    ]]></description>
+
+    <!-- please see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
+         on how to target different products -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.python</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <completion.contributor implementationClass="factory.FactoryCompletionContributor" language="Python" order="first"/>
+    </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+    </actions>
+</idea-plugin>
