@@ -22,7 +22,7 @@ class FactoryUtils {
 
             val modelName = factoryClassName.replace("Factory", "")
             val project = factoryClass.project
-            val modelClass = PyClassNameIndexInsensitive.find(modelName, factoryClass.project).firstOrNull() ?: return null
+            val modelClass = PyClassNameIndexInsensitive.find(modelName, project).firstOrNull() ?: return null
 
             return ResolvedData(project, modelClass)
         }
